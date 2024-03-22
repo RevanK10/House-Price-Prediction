@@ -1,11 +1,17 @@
+#Libraries
 import pandas as pd
 import numpy as np
-from sklearn.metrics import r2_score
+#from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, GridSearchCV
 # Read the data from the dataframe
 data = pd.read_csv("Housing.csv")
 
+#Check for missing values
+#missing_val = data.isnull().sum()
+#print(missing_val) <--- No missing values in any column
+
+#Manage outliers
 q1_pr=np.percentile(data['price'],25)
 q2_pr=np.percentile(data['price'],75)
 iqr_pr=q2_pr-q1_pr
@@ -20,22 +26,24 @@ lower_ar=q1_ar-1.5*iqr_ar
 upper_ar=q2_ar+1.5*iqr_ar
 data=data[(data['area']>=lower_ar) & (data['area']<=upper_ar)]
 
-#Scale the values down using logarithmic transformations
-#data['price'] = np.log(data['price'] + 1)
 
 #Convert Boolean values into numerical data
 data = pd.get_dummies(data, columns=['mainroad','guestroom','basement','hotwaterheating', 'airconditioning','prefarea','furnishingstatus'])
 
+#Make a hyperparameter grid
 para_grid = {
     'n_estimators': [65,75,85],
     'max_depth': [3,5,7],
 }
 
-features = data.drop('price', axis=1).values
-labels = data['price'].values
+#Define the features and label
+x_features = data.drop('price', axis=1).values
+y_labels = data['price'].values
 
+#Split the features and labels into training and testing sets
 x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size = 0.1, random_state = 42)
 
+#Create the model with the best parameters
 rf_regressor = RandomForestRegressor(random_state=42)
 
 gSearch = GridSearchCV(estimator = rf_regressor, param_grid = para_grid, cv=5, scoring = 'neg_mean_squared_error')
@@ -45,6 +53,14 @@ best_paras = gSearch.best_params_
 
 best_rfr = RandomForestRegressor(**best_paras, random_state = 42)
 best_rfr.fit(x_train, y_train)
+
+#Predict from the testing sets and evaluate the model
+#prediction = best_rfr.predict(x_test)
+
+#Evaluation using MSE, MAE, and R-Squared
+#mae = mean_absolute_error(y_test, prediction)
+#mse = mean_squared_error(y_test, prediction)
+#r2 = r2_score(y_test, prediction)
 
 #Variables for the input
 mainroad_yes = ''
